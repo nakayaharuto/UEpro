@@ -16,7 +16,9 @@ public class UEProject : ModuleRules
 			"EnhancedInput", 
 			"Niagara",
 			"CableComponent",
-		});
+            "UMG",
+            "Slate"
+        });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 
