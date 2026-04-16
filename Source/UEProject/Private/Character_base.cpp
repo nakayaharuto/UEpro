@@ -4,6 +4,7 @@
 #include "Character_base.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
@@ -27,13 +28,18 @@ ACharacter_base::ACharacter_base()
 	CameraBoom->SetRelativeRotation(FRotator(-60.f, 0.f, 0.f)); // 斜め見下ろし
 	CameraBoom->bDoCollisionTest = false;
 
+	CameraBoom->bInheritPitch = false;
+	CameraBoom->bInheritYaw = false;
+	CameraBoom->bInheritRoll = false;
+
 	/** カメラ本体 */
 	TopDownCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("TopDownCamera"));
 	TopDownCameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	TopDownCameraComponent->bUsePawnControlRotation = false;
 	
-
-
+	/** プレイヤーの向き */
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	GetCharacterMovement()->bUseControllerDesiredRotation = false;
 }
 
 ///////////////////////////////////////////////////////////////////////////
