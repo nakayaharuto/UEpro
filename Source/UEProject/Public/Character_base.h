@@ -18,12 +18,12 @@ class UEPROJECT_API ACharacter_base : public ACharacter
 	GENERATED_BODY()
 public:
 	/** マッピングコンテキスト  */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components", meta = (AllowPrivateAccess = "true"))
 
 	TObjectPtr<UInputMappingContext> DefaultMappingContext;
 
 	/** 移動アクション  */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components", meta = (AllowPrivateAccess = "true"))
 
 	TObjectPtr<UInputAction> MoveAction;
 
@@ -39,12 +39,12 @@ public:
 
 private:
 	/** メインカメラ  */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Components", meta = (AllowPrivateAccess = "true"))
 
 	TObjectPtr<UCameraComponent> TopDownCameraComponent;
 
 	/** カメラアーム  */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Components", meta = (AllowPrivateAccess = "true"))
 
 	TObjectPtr<USpringArmComponent> CameraBoom;
 

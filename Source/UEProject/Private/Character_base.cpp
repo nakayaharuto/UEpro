@@ -69,11 +69,9 @@ void ACharacter_base::Move(const FInputActionValue& Value)
 	const FVector2D MovementVector = Value.Get<FVector2D>();
 	if (Controller != nullptr)
 	{
-		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
-
-		const FVector ForwardDir = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-		const FVector RightDir = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+		//ÉèÅ[ÉãÉhÇÃx,y
+		const FVector ForwardDir = FVector::ForwardVector;
+		const FVector RightDir = FVector::RightVector;
 
 		AddMovementInput(ForwardDir, MovementVector.Y);
 		AddMovementInput(RightDir, MovementVector.X);
