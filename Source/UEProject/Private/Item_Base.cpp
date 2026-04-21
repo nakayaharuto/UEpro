@@ -3,6 +3,9 @@
 
 #include "Item_Base.h"
 #include "Components/SphereComponent.h"
+#include "NiagaraComponent.h"
+#include "NiagaraSystem.h"
+#include "NiagaraFunctionLibrary.h"
 #include "Character_base.h"
 
 // Sets default values
@@ -12,14 +15,13 @@ AItem_Base::AItem_Base()
 	PrimaryActorTick.bCanEverTick = true;
 
 	/**当たり判定の設定*/
-	CollisionComponent = CreateDefaultSubobject<USphereComponent>(TEXT("当たり判定カプセル"));
+	CollisionComponent = CreateDefaultSubobject<USphereComponent>(TEXT("CollisionComponent"));
 	RootComponent = CollisionComponent;
 	CollisionComponent->SetSphereRadius(100.f);
 
 	/**メッシュの設定*/
-	ItemMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
-	ItemMesh->SetupAttachment(RootComponent);
-	ItemMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);//メッシュには判定を持たせない
+	ItemNiagara = CreateDefaultSubobject<UNiagaraComponent>(TEXT("ItemNiagara"));
+	ItemNiagara->SetupAttachment(RootComponent);
 
 }
 
@@ -48,9 +50,11 @@ void AItem_Base::ApplyItemData()
 		static const FString ContextString(TEXT("Item Data Context"));
 		FItemData* Data = ItemDataTable->FindRow<FItemData>(ItemRowName, ContextString);
 
-		if (Data && Data->PickupMesh)
+		if (Data && Data->PickupNiagara.IsValid())
 		{
-			ItemMesh->SetStaticMesh(Data->PickupMesh);
+			// Niagaraシステムをセット
+			ItemNiagara->SetAsset(Data->PickupNiagara.LoadSynchronous());
+			ItemNiagara->Activate();
 		}
 	}
 }

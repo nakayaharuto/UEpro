@@ -4,12 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "NiagaraComponent.h"
 #include "Data/ItemData.h"
 #include "Item_Base.generated.h"
 
 class USphereComponent;
 class UStaticMeshComponent;
-class FName;
+class UNiagaraComponent;
 class UDataTable;
 
 
@@ -34,18 +35,18 @@ protected:
 	/**見た目のカプセル*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item", meta = (AllowPrivateAccess = "true"))
 
-	TObjectPtr<UStaticMeshComponent> ItemMesh;
+	TObjectPtr<UNiagaraComponent> ItemNiagara;
 
 	/**データテーブルの行を参照*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
-	TObjectPtr<FName> ItemRowName;
+	FName ItemRowName;
 
 	/**本体への参照*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
 	TObjectPtr<UDataTable> ItemDataTable;
 
 	/**プレイヤーが触れた時のイベント*/
-	UPROPERTY()
+	UFUNCTION()
 	void OnOverlapBegin(UPrimitiveComponent* OverlappedComponent,
 		AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, 

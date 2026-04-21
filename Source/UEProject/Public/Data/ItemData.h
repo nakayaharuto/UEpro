@@ -2,6 +2,7 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "Engine/DataTable.h"
+#include "NiagaraSystem.h"
 #include "ItemData.generated.h"
 
 // アイテムのカテゴリー（武器、素材、消費アイテムなど）
@@ -44,9 +45,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
     TSoftObjectPtr<UTexture2D> ItemIcon;
 
-    /** フィールドに落ちている時の見た目（StaticMesh） */
+    /** フィールドに落ちている時の見た目（Niagara） */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
-    TObjectPtr<UStaticMesh> PickupMesh;
+    TSoftObjectPtr<UNiagaraSystem> PickupNiagara;
 
     /** アイテムの説明文 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
