@@ -2,12 +2,13 @@
 
 
 #include "Character_base.h"
-#include "Camera/CameraComponent.h"
-#include "GameFramework/SpringArmComponent.h"
-#include "Components/CapsuleComponent.h"
+#include "Camera/CameraComponent.h"//カメラ
+#include "GameFramework/SpringArmComponent.h"//カメラアーム
+#include "Components/CapsuleComponent.h"//当たり判定
 #include "GameFramework/CharacterMovementComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "ItemRecipeData.h"
 #include "InputActionValue.h"
 
 // Sets default values
@@ -106,13 +107,69 @@ void ACharacter_base::AddItemToInventory(FName ItemID)
 	//持っていれば個数を増やす
 	if (Inventory.Contains(ItemID))
 	{
-		Inventory[ItemID];
+		Inventory[ItemID]++;
 	}
 	else
 	{
 		Inventory.Add(ItemID, 1);
 	}
 
+	int32& Count = Inventory.FindOrAdd(ItemID);
+	Count++;
+
+	/*拾うたびに予測結果の更新*/
+	UpdateCraftingPredictions();
+
 	UE_LOG(LogTemp, Log, TEXT("Inventory Update: %s (Count: %d)"), *ItemID.ToString(), Inventory[ItemID]);
 }
 
+/**インベントリ内での予測結果*/
+void ACharacter_base::UpdateCraftingPredictions()
+{
+	if (!RecieTable) return;
+
+	CraftPredictions.Empty();//レシピのリセット
+
+	/*レシピを走査*/
+	TArray<FItemRecipeData*> AllReipes;
+	RecieTable->GetAllRows<FItemRecipeData>(TEXT("RecipeContext"), AllReipes);
+
+	for (FItemRecipeData* Recipe : AllReipes)
+	{
+		int32 Total = 0;
+		int32 CurrentOwned = 0;
+		bool component = false;
+
+		//チェック
+		for (auto& Elem : Recipe->RequiredMaterials)
+		{
+			FName MatName = Elem.Key;
+			int32 NeedCount = Elem.Value;
+
+			Total += NeedCount;
+
+			if (Inventory.Contains(MatName))
+			{
+				// 持っている数（必要数を超えて持っている場合は必要数で止める）
+				CurrentOwned += FMath::Min(Inventory[MatName], NeedCount);
+				component = true;
+			}
+		}
+
+		// 1つでも素材を持っていれば予報リストに加える
+		if (component)
+		{
+			FCraftPrediction Prediction;
+			Prediction.ResultItemName = Recipe->ResultItemName;
+			Prediction.Progress = (float)CurrentOwned / (float)Total;
+			Prediction.bCanCraft = (CurrentOwned >= Total);
+
+			CraftPredictions.Add(Prediction);
+		}
+	}
+
+	// 進捗（Progress）が高い順にソートする（あと少しで完成するものを上に）
+	CraftPredictions.Sort([](const FCraftPrediction& A, const FCraftPrediction& B) {
+		return A.Progress > B.Progress;
+		});
+}

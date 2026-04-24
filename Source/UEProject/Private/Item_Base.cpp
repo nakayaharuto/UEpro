@@ -51,23 +51,55 @@ void AItem_Base::Tick(float DeltaTime)
 }
 
 void AItem_Base::ApplyItemData()
-
 {
-	if (ItemDataTable && !ItemRowName.IsNone())
-	{
-		static const FString ContextString(TEXT("Item Data Context"));
-		FItemData* Data = ItemDataTable->FindRow<FItemData>(ItemRowName, ContextString);
+	// ハンドルから直接行データを取得
+	FItemData* Data = ItemDataHandle.GetRow<FItemData>(TEXT("Item Data Context"));
 
-		if (Data && Data->PickupNiagara.IsValid())
+	if (Data)
+	{
+		// ハンドルに保存されている「行の名前」を取得（インベントリ追加用など）
+		ItemRowName = ItemDataHandle.RowName;
+
+		if (Data->PickupNiagara.IsValid())
 		{
-			// Niagaraシステムをセット
-			ItemNiagara->SetAsset(Data->PickupNiagara.LoadSynchronous());
-			ItemNiagara->Activate();
+			(void)Data->PickupNiagara.LoadSynchronous();
+			ItemNiagara->SetAsset(Data->PickupNiagara.Get());
+			ItemNiagara->Activate(true);
 		}
 	}
 }
 
 void AItem_Base::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	
+	// コンパイラの警告（未使用の引数）を回避
+	(void)OverlappedComponent;
+	(void)OtherComp;
+	(void)OtherBodyIndex;
+	(void)bFromSweep;
+	(void)SweepResult;
+
+	// 1. 当たった相手がプレイヤー（ACharacter_base）か確認
+	ACharacter_base* Player = Cast<ACharacter_base>(OtherActor);
+
+	if (Player)
+	{
+		// 2. ログを出力（デバッグ用）
+		UE_LOG(LogTemp, Warning, TEXT("Item Collected: %s"), *ItemRowName.ToString());
+
+		// 3. プレイヤーのインベントリに追加
+		// ※戻り値がある場合は (void) で受け流す
+		Player->AddItemToInventory(ItemRowName);
+
+		// 4. Niagaraの演出を切り離して残す
+		if (ItemNiagara)
+		{
+			// 戻り値 void への対応として (void) キャスト
+			(void)ItemNiagara->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+			ItemNiagara->Deactivate();
+			ItemNiagara->SetAutoDestroy(true);
+		}
+
+		// 5. アイテム（当たり判定）自体を消去
+		(void)Destroy();
+	}
 }

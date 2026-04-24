@@ -12,6 +12,26 @@ class USpringArmComponent;
 class UInputMappingContext;
 class UInputAction;
 
+/*予測結果を保持*/
+USTRUCT(BlueprintType)
+struct FCraftPrediction
+{
+	GENERATED_BODY()
+
+	/*何かできるか*/
+	UPROPERTY(BlueprintReadOnly)
+	FName ResultItemName;
+
+	/*?/?個インベントリにあるか*/
+	UPROPERTY(BlueprintReadOnly)
+	float Progress;
+
+	/*合成可能か*/
+	UPROPERTY(BlueprintReadOnly)
+	bool bCanCraft;
+};
+
+/*Playerクラス*/
 UCLASS()
 class UEPROJECT_API ACharacter_base : public ACharacter
 {
@@ -45,6 +65,16 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	void AddItemToInventory(FName ItemID);
 
+	/*セット用関数*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crafting",meta = (AllowPrivateAccess = "true"))
+	UDataTable* RecieTable;
+
+	// 現在の「予報」リスト（UIはこれを見て表示を変える）
+	UPROPERTY(BlueprintReadOnly, Category = "Crafting")
+	TArray<FCraftPrediction> CraftPredictions;
+
+
+
 private:
 	/** メインカメラ  */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Components", meta = (AllowPrivateAccess = "true"))
@@ -55,11 +85,6 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Components", meta = (AllowPrivateAccess = "true"))
 
 	TObjectPtr<USpringArmComponent> CameraBoom;
-
-	
-
-	
-
 	
 public:
 	// Sets default values for this character's properties
@@ -78,5 +103,10 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+public:
+
+	// レシピを再計算する関数
+	void UpdateCraftingPredictions();
 
 };

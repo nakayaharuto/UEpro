@@ -41,6 +41,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
 	FName ItemRowName;
 
+	/**選択ハンドル*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
+	FDataTableRowHandle ItemDataHandle;
+
 	/**本体への参照*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
 	TObjectPtr<UDataTable> ItemDataTable;
