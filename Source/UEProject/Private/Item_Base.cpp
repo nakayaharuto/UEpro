@@ -18,6 +18,10 @@ AItem_Base::AItem_Base()
 	CollisionComponent = CreateDefaultSubobject<USphereComponent>(TEXT("CollisionComponent"));
 	RootComponent = CollisionComponent;
 	CollisionComponent->SetSphereRadius(100.f);
+	CollisionComponent->ShapeColor = FColor::Red; //当たり判定の線の色を赤にする
+	CollisionComponent->SetCollisionProfileName(TEXT("Trigger")); //トリガーとして設定
+	CollisionComponent->SetGenerateOverlapEvents(true);         // オーバーラップを許可
+	CollisionComponent->bHiddenInGame = false;
 
 	/**メッシュの設定*/
 	ItemNiagara = CreateDefaultSubobject<UNiagaraComponent>(TEXT("ItemNiagara"));
@@ -28,11 +32,15 @@ AItem_Base::AItem_Base()
 // Called when the game starts or when spawned
 void AItem_Base::BeginPlay()
 {
+	// オーバーラップイベントの登録
+	if (CollisionComponent)
+	{
+		CollisionComponent->OnComponentBeginOverlap.AddDynamic(this, &AItem_Base::OnOverlapBegin);
+	}
+
 	Super::BeginPlay();
 	ApplyItemData();
 	
-	// オーバーラップイベントの登録
-	CollisionComponent->OnComponentBeginOverlap.AddDynamic(this, &AItem_Base::OnOverlapBegin);
 }
 
 // Called every frame
@@ -61,13 +69,5 @@ void AItem_Base::ApplyItemData()
 
 void AItem_Base::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	// プレイヤーが触れたかチェック
-	if (ACharacter_base* Player = Cast<ACharacter_base>(OtherActor))
-	{
-		// ここでプレイヤーのインベントリに追加する処理を呼ぶ（後述）
-		// Player->AddItemToInventory(ItemRowName);
-
-		// 拾ったので消える
-		Destroy();
-	}
+	
 }

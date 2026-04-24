@@ -37,6 +37,14 @@ public:
 
 	//TObjectPtr<UInputAction> CollectAction;
 
+	/**インベントリ*/
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory", meta = (AllowPrivateAccess = "true"))
+	TMap<FName, int32> Inventory;
+
+	/**インベントリ関数*/
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	void AddItemToInventory(FName ItemID);
+
 private:
 	/** メインカメラ  */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Components", meta = (AllowPrivateAccess = "true"))
@@ -48,8 +56,11 @@ private:
 
 	TObjectPtr<USpringArmComponent> CameraBoom;
 
+	
 
+	
 
+	
 public:
 	// Sets default values for this character's properties
 	ACharacter_base();

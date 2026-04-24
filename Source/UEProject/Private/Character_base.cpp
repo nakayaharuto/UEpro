@@ -78,9 +78,6 @@ void ACharacter_base::Move(const FInputActionValue& Value)
 	}
 }
 
-
-
-
 // Called every frame
 void ACharacter_base::Tick(float DeltaTime)
 {
@@ -99,5 +96,23 @@ void ACharacter_base::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 		if(MoveAction) EnhancedInput->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ACharacter_base::Move);
 	}
 
+}
+
+/**インベントリの構成*/
+void ACharacter_base::AddItemToInventory(FName ItemID)
+{
+	if (ItemID.IsNone()) return;
+
+	//持っていれば個数を増やす
+	if (Inventory.Contains(ItemID))
+	{
+		Inventory[ItemID];
+	}
+	else
+	{
+		Inventory.Add(ItemID, 1);
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("Inventory Update: %s (Count: %d)"), *ItemID.ToString(), Inventory[ItemID]);
 }
 
