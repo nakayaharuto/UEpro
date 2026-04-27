@@ -8,6 +8,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Data/ItemData.h"
 #include "ItemRecipeData.h"
 #include "InputActionValue.h"
 
@@ -40,7 +41,11 @@ ACharacter_base::ACharacter_base()
 	/** プレイヤーの向き */
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->bUseControllerDesiredRotation = false;
-	
+
+	/** 速度の反映 */
+	GetCharacterMovement()->MaxWalkSpeed = ACharacter_base::BaseSpeed;
+
+
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
@@ -61,6 +66,9 @@ void ACharacter_base::BeginPlay()
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		}
 	}
+
+	/** 開始時に倍率を適用 */
+	UpdateMovementSpeed();
 
 }
 
@@ -86,6 +94,7 @@ void ACharacter_base::Tick(float DeltaTime)
 
 }
 
+/** マッピングコンテキスト */
 // Called to bind functionality to input
 void ACharacter_base::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -99,23 +108,29 @@ void ACharacter_base::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 
 }
 
+void ACharacter_base::UpdateMovementSpeed()
+{
+	if (GetCharacterMovement())
+	{
+		/** 基本速度 * 倍率で最終的な速度の決定 */
+		GetCharacterMovement()->MaxWalkSpeed = BaseSpeed * SpeedMultiplier;
+
+		UE_LOG(LogTemp, Log, TEXT("Current Speed: %f"), GetCharacterMovement()->MaxWalkSpeed);
+	}
+}
+
+///////////////////////////////////////////////////////////////////////
+/**インベントリ*/
+
 /**インベントリの構成*/
 void ACharacter_base::AddItemToInventory(FName ItemID)
 {
 	if (ItemID.IsNone()) return;
 
 	//持っていれば個数を増やす
-	if (Inventory.Contains(ItemID))
-	{
-		Inventory[ItemID]++;
-	}
-	else
-	{
-		Inventory.Add(ItemID, 1);
-	}
-
-	int32& Count = Inventory.FindOrAdd(ItemID);
-	Count++;
+	// FindOrAdd 1回で「追加」と「加算」を同時に行う（最も安全で速い書き方）
+	int32& CurrentCount = Inventory.FindOrAdd(ItemID);
+	CurrentCount++;
 
 	/*拾うたびに予測結果の更新*/
 	UpdateCraftingPredictions();
@@ -172,4 +187,75 @@ void ACharacter_base::UpdateCraftingPredictions()
 	CraftPredictions.Sort([](const FCraftPrediction& A, const FCraftPrediction& B) {
 		return A.Progress > B.Progress;
 		});
+}
+
+TArray<FCraftPrediction> ACharacter_base::GetAvailableWeaponList()
+{
+	TArray<FCraftPrediction> DisplayList;
+
+	// 1. 全てのレシピをチェックして「作れるもの」を探す
+	// UpdateCraftingPredictions() の結果（CraftPredictions）を利用
+	for (const FCraftPrediction& Prediction : CraftPredictions)
+	{
+		if (Prediction.bCanCraft)
+		{
+			FCraftPrediction Info;
+			Info.ResultItemName = Prediction.ResultItemName;
+			Info.bOwned = Inventory.Contains(Info.ResultItemName) && Inventory[Info.ResultItemName] > 0;
+			Info.bCanCraft = true;
+			DisplayList.Add(Info);
+		}
+	}
+
+	// 2. 「すでに持っている武器」の中で、上記リストに入っていないものを追加
+	for (auto& Elem : Inventory)
+	{
+		FName ItemID = Elem.Key;
+		// ※ここで ItemDataTable を参照して「武器フラグ」が True のものだけを抽出する
+		if (IsWeapon(ItemID))
+		{
+			// すでにリストにある（＝作れるし持っている）場合はスキップ
+			bool bAlreadyAdded = DisplayList.ContainsByPredicate([&](const FCraftPrediction& W) { return W.ResultItemName == ItemID; });
+
+			if (!bAlreadyAdded && Elem.Value > 0)
+			{
+				FCraftPrediction Info;
+				Info.ResultItemName = ItemID;
+				Info.bOwned = true;
+				Info.bCanCraft = false; // すでに持っているので「素材から作る」判定は不要
+				DisplayList.Add(Info);
+			}
+		}
+	}
+
+	return DisplayList;
+}
+
+
+/** 武器の切り替え */
+void ACharacter_base::ChangeWeapon(FName NewWeaponID)
+{
+	/** 持っていない武器には代えられない */
+	if (!Inventory.Contains(NewWeaponID) || Inventory[NewWeaponID] <= 0) return;
+
+	WeaponID = NewWeaponID;
+
+	/** 武器のメッシュを変えたり、攻撃力を呼び出す処理 */
+	UE_LOG(LogTemp, Warning, TEXT("Equipped Weapon Changed to: %s"), *NewWeaponID.ToString());
+}
+
+/** 指定したIDが武器かどうかを判定する内部関数 */
+bool ACharacter_base::IsWeapon(FName ItemID)
+{
+	if (!ItemDataTable) return false;
+
+	// 前に作ったアイテムデータの構造体（FItemData）を取得
+	static const FString ContextString(TEXT("Weapon Check Context"));
+	FItemData* Data = ItemDataTable->FindRow<FItemData>(ItemID, ContextString);
+
+	if (Data)
+	{
+		return Data->ItemType == EItemType::Weapon;
+	}
+	return false;
 }

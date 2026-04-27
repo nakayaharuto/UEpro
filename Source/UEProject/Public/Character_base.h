@@ -26,6 +26,10 @@ struct FCraftPrediction
 	UPROPERTY(BlueprintReadOnly)
 	float Progress;
 
+	/** すでに持っているか */
+	UPROPERTY(BlueprintReadOnly)
+	bool bOwned;
+
 	/*合成可能か*/
 	UPROPERTY(BlueprintReadOnly)
 	bool bCanCraft;
@@ -37,6 +41,7 @@ class UEPROJECT_API ACharacter_base : public ACharacter
 {
 	GENERATED_BODY()
 public:
+	/////////////////////////////////////////////////////////////
 	/** マッピングコンテキスト  */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components", meta = (AllowPrivateAccess = "true"))
 
@@ -47,6 +52,7 @@ public:
 
 	TObjectPtr<UInputAction> MoveAction;
 
+
 	/** 攻撃アクション  */
 	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
 
@@ -56,10 +62,31 @@ public:
 	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
 
 	//TObjectPtr<UInputAction> CollectAction;
+	
+	/** 基本速度 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement", meta = (AllowPrivateAccess = "true"))
 
+	float BaseSpeed = 800.0f;
+
+	/** 速度の倍率(アイテムなどでの調整も可) */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement", meta = (AllowPrivateAccess = "true"))
+	
+	float SpeedMultiplier = 1.0f;
+
+	/** 最終の速度計算を適応する関数 */
+	UFUNCTION(BlueprintCallable, Category = "Movement")
+	void UpdateMovementSpeed();
+
+
+
+	/////////////////////////////////////////////////////////////
 	/**インベントリ*/
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory", meta = (AllowPrivateAccess = "true"))
 	TMap<FName, int32> Inventory;
+
+	/** 武器のリスト */
+	UFUNCTION(BlueprintCallable, Category = "Inventory", meta = (AllowPrivateAccess = "true"))
+	TArray<FCraftPrediction> GetAvailableWeaponList();
 
 	/**インベントリ関数*/
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
@@ -72,6 +99,26 @@ public:
 	// 現在の「予報」リスト（UIはこれを見て表示を変える）
 	UPROPERTY(BlueprintReadOnly, Category = "Crafting")
 	TArray<FCraftPrediction> CraftPredictions;
+
+	/** 装備中の武器のID */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment", meta = (AllowPrivateAccess = "true"))
+	FName WeaponID;
+
+	/** インベントリから装備を切り替える関数 */
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	void ChangeWeapon(FName NewWeaponID);
+
+	/** アイテムデータテーブル */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crafting", meta = (AllowPrivateAccess = "true"))
+	UDataTable* ItemDataTable;
+
+	/** 指定したIDが武器かどうかを判定する内部関数 */
+	bool IsWeapon(FName ItemID);
+
+
+
+
+
 
 
 
